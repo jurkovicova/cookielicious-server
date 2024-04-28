@@ -25,15 +25,6 @@ app.get("/", (req, res) => {
 })
 
 // ##### Customer Handler #####
-async function getCustomers() {
-    try {
-        const data = await db.query("SELECT * FROM customers");
-        return data; // Assuming data is returned as rows
-    } catch (error) {
-        throw new Error("Failed to fetch customers from database");
-    }
-}
-
 app.get("/cust", async (_, res) => {
     try {
         const customers = await getCustomers();
@@ -60,25 +51,14 @@ app.get("/order", async (req, res) => {
 
 app.post("/order", async (req, res) => {
 
-    let cust_id;
+    // here validate the req input
     try {
-        const email = req.body.email; // Assuming email is sent in the request body
-        // Check if customer with the provided email already exists
-        const existingCustomer = await findCustomerByEmail(email);
 
-        if (!existingCustomer) {
-            //createNewCustomer
-            console.log("New customer addition")
-            const cust_values = [req.body.cust_firstname, req.body.cust_lastname, req.body.email]
-            await db.query("INSERT INTO customers (`cust_firstname`,`cust_lastname`,`email`) VALUES (?)", [cust_values])
-            cust_id = await db.query("SELECT customer_id FROM customers WHERE email = (?)", email)
-            cust_id = cust_id[0]['customer_id']
-        } else {
-            cust_id = existingCustomer.customer_id
-        }
+        let cust_id = null;
 
+        cust_id = await getCustomerId(req)
 
-        const q = "INSERT INTO orders (`order_id`,`created_at`,`delivery_at`,`item_id`,`item_quant`, `cust_id`, `delivery`, `add_id`) VALUES (?)"
+        const q = "INSERT INTO orders (`order_id`,`created_at`,`delivery_at`,`item_name`,`item_quant`, `cust_id`, `delivery`) VALUES (?)"
 
         const currentDate = new Date().toISOString().slice(0, 19).replace('T', ' '); // Get current date-time in ISO format
         const formattedCurrentDate = currentDate.replace(' ', 'T'); // Replace space with 'T' for MySQL DATETIME format
@@ -88,21 +68,20 @@ app.post("/order", async (req, res) => {
             orderId,
             formattedCurrentDate,
             formattedCurrentDate,
-            req.body.item_id,
+            req.body.item_name,
             req.body.item_quant,
             cust_id,
-            req.body.delivery,
-            req.body.add_id
+            1
         ]
 
-        
-        const data = db.query(q, [values])
-        return res.json(data)
+        await db.query(q, [values])
+        return res.json({ message: "Order created successfully" });
 
     } catch (error) {
-        console.error("Error processing order:", error);
-        return res.status(500).json({ error: "Failed to process order" });
+        console.error("Error creating order:", error);
+        return res.status(500).json({ error: "An error occurred while creating the order" });
     }
+
 
 
 })
@@ -129,6 +108,38 @@ async function findCustomerByEmail(email) {
     } catch (error) {
         console.error("Error accessing database:", error);
     }
+}
+
+async function getCustomers() {
+    try {
+        const data = await db.query("SELECT * FROM customers");
+        return data; // Assuming data is returned as rows
+    } catch (error) {
+        throw new Error("Failed to fetch customers from database");
+    }
+}
+
+
+async function getCustomerId(req) {
+    let cust_id;
+    const email = req.body.email
+
+    // Check if customer with the provided email already exists
+    const existingCustomer = await findCustomerByEmail(email);
+
+    if (!existingCustomer) {
+        // Create new customer
+        console.log("New customer addition");
+        const cust_values = [req.body.cust_firstname, req.body.cust_lastname, req.body.email];
+        await db.query("INSERT INTO customers (`cust_firstname`,`cust_lastname`,`email`) VALUES (?)", [cust_values]);
+        const result = await db.query("SELECT customer_id FROM customers WHERE email = (?)", [email]);
+        cust_id = result[0]['customer_id'];
+    } else {
+        cust_id = existingCustomer.customer_id;
+    }
+
+    console.log(cust_id)
+    return cust_id;
 }
 
 
