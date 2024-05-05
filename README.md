@@ -4,3 +4,5 @@ Hello world! Cookielicious server is the backend for [Cookielicious](https://git
 
 ## TODO
 - [ ] add license
+- [ ] pin node version to v22
+- [ ] move password to an env variable (and change it!)
