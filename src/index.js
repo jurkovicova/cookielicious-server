@@ -4,7 +4,7 @@ import Db from 'mysql2-async';
 
 const app = express();
 
-export const db = new Db({
+export const database = new Db({
 	host: 'localhost',
 	user: 'root',
 	password: 'NqY4mxzqRUFFG',
@@ -16,38 +16,38 @@ export const db = new Db({
 app.use(express.json());
 app.use(cors());
 
-app.get('/', (request, res) => {
-	res.json('Hello this is backend');
+app.get('/', (request, response) => {
+	response.json('Hello this is backend');
 });
 
 // ##### Customer Handler #####
-app.get('/cust', async (_, res) => {
+app.get('/cust', async (_, response) => {
 	try {
 		const customers = await getCustomers();
-		res.json(customers); // Send the customers data as JSON response
+		response.json(customers); // Send the customers data as JSON response
 	} catch (error) {
 		console.error('Error fetching customers:', error);
-		res.status(500).json({error: 'Failed to fetch customers'});
+		response.status(500).json({error: 'Failed to fetch customers'});
 	}
 });
 
 // ###### Order Handler #####
-app.get('/order', async (request, res) => {
+app.get('/order', async (request, response) => {
 	try {
-		const data = await db.query('SELECT * from item');
-		res.json(data);
+		const data = await database.query('SELECT * from item');
+		response.json(data);
 	} catch {
 		console.error('Error fetching items');
-		res.status(500).json({error: 'Failed to fetch items'});
+		response.status(500).json({error: 'Failed to fetch items'});
 	}
 });
 
-app.post('/order', async (request, res) => {
+app.post('/order', async (request, response) => {
 	// Here validate the req input
 	try {
-		let cust_id = null;
+		let custId = null;
 
-		cust_id = await getCustomerId(request);
+		custId = await getCustomerId(request);
 
 		const q = 'INSERT INTO orders (`order_id`,`created_at`,`delivery_at`,`item_name`,`item_quant`, `cust_id`, `delivery`) VALUES (?)';
 
@@ -61,15 +61,15 @@ app.post('/order', async (request, res) => {
 			formattedCurrentDate,
 			request.body.item_name,
 			request.body.item_quant,
-			cust_id,
+			custId,
 			1,
 		];
 
-		await db.query(q, [values]);
-		return res.json({message: 'Order created successfully'});
+		await database.query(q, [values]);
+		return response.json({message: 'Order created successfully'});
 	} catch (error) {
 		console.error('Error creating order:', error);
-		return res.status(500).json({error: 'An error occurred while creating the order'});
+		return response.status(500).json({error: 'An error occurred while creating the order'});
 	}
 });
 
@@ -98,7 +98,7 @@ async function findCustomerByEmail(email) {
 
 async function getCustomers() {
 	try {
-		const data = await db.query('SELECT * FROM customers');
+		const data = await database.query('SELECT * FROM customers');
 		return data; // Assuming data is returned as rows
 	} catch {
 		throw new Error('Failed to fetch customers from database');
@@ -106,24 +106,24 @@ async function getCustomers() {
 }
 
 async function getCustomerId(request) {
-	let cust_id;
+	let custId;
 	const email = request.body.email;
 
 	// Check if customer with the provided email already exists
 	const existingCustomer = await findCustomerByEmail(email);
 
 	if (existingCustomer) {
-		cust_id = existingCustomer.customer_id;
+		custId = existingCustomer.customer_id;
 	} else {
 		// Create new customer
 		console.log('New customer addition');
-		const cust_values = [request.body.cust_firstname, request.body.cust_lastname, request.body.email];
-		await db.query('INSERT INTO customers (`cust_firstname`,`cust_lastname`,`email`) VALUES (?)', [cust_values]);
-		const result = await db.query('SELECT customer_id FROM customers WHERE email = (?)', [email]);
-		cust_id = result[0].customer_id;
+		const custValues = [request.body.cust_firstname, request.body.cust_lastname, request.body.email];
+		await database.query('INSERT INTO customers (`cust_firstname`,`cust_lastname`,`email`) VALUES (?)', [custValues]);
+		const result = await database.query('SELECT customer_id FROM customers WHERE email = (?)', [email]);
+		custId = result[0].customer_id;
 	}
 
-	console.log(cust_id);
-	return cust_id;
+	console.log(custId);
+	return custId;
 }
 
