@@ -10,7 +10,6 @@ export const database = new Db({
 	password: 'NqY4mxzqRUFFG',
 	database: 'Order system',
 	skiptzfix: true,
-
 });
 
 app.use(express.json());
