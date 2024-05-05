@@ -5,7 +5,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "xo",
     "start": "nodemon index.js"
   },
   "keywords": [],
@@ -17,5 +17,8 @@
     "mysql2": "^3.9.3",
     "mysql2-async": "^2.0.1",
     "nodemon": "^3.1.0"
+  },
+  "devDependencies": {
+    "xo": "^0.58.0"
   }
 }
