@@ -58,8 +58,8 @@ app.post('/order', async (request, response) => {
 			orderId,
 			formattedCurrentDate,
 			formattedCurrentDate,
-			request.body.item_name,
-			request.body.item_quant,
+			request.body.itemName,
+			request.body.itemQuant,
 			custId,
 			1,
 		];
